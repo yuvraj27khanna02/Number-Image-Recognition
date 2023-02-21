@@ -18,7 +18,7 @@ def create_basic_model(k_i_fn, act_fn, opt_fn, loss_fn):
     )
     return model
 
-def all_k_i_fns () -> list:
+def all_k_i_fns() -> list:
     """Returns a list of all kernel initialiser functions
     """
     # for all k_i in all_k_i_fns():
