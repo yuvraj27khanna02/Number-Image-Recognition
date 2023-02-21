@@ -17,8 +17,17 @@ def create_model(activation_function: str):
     return model
 
 def all_act_fns() -> list:
+    # returns all the activation functions
     return ["linear", "sigmoid", "hard_sigmoid", "tanh", "softmax",
             "relu", "leaky_selu", "elu", "selu", "swish"]
+
+def all_opt_fns() -> list:
+    # returns all the optimizer functions
+    return []
+
+def all_loss_fns() -> list:
+    # returns all the loss functions
+    return []
 
 def CNN_model():
     NUMBER_OF_OUTPUTS = 10
