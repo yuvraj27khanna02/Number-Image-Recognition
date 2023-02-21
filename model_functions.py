@@ -1,4 +1,5 @@
-#import tensorflow as tf
+import tensorflow as tf
+import scipy.ndimage.interpolation import shift
 
 def create_basic_model(k_i_fn, act_fn, opt_fn, loss_fn):
     model = tf.keras.Sequential([
@@ -131,3 +132,19 @@ def CNN_model():
         loss=tf.keras.losses.SparseCategoricalCrossentropy(),
         metrics=["accuracy"]
     )
+    
+    # Functions for Data Augmentation
+    
+    def _shift_image(image, diffx, diffy, image_size):
+        curr_image = image.reshape(image_size)
+        shifted_image = shift(curr_image, [diffx, diffy], cval=0, mode="constant")
+        return shifted_image.reshape([-1])
+    
+    def augment_data(x_train, y_train):
+        x_train_aug = [image for image in x_train]
+        y_train_aug = [image for image in y_train]
+        for diffx, diffy in (1,0), (-1,0), (0,1), (0,-1)):
+            for (x_image, y_label) in (x_train, y_train):
+                x_train_aug.append(_shift_image(x_image, diffx, diffy))
+                y_train_aug.append(_shift_image(y_label))
+        
