@@ -3,20 +3,37 @@ import scipy.ndimage.interpolation import shift
 
 def create_basic_model(k_i_fn, act_fn, opt_fn, loss_fn):
     model = tf.keras.Sequential([
-        tf.keras.layers.Conv2D(256, (3,3), activation=act_fn,
-        	input_shape=(28, 28, 1), kernel_initializer=k_i_fn),
+        tf.keras.layers.Conv2D(256, (3,3), activation=act_fn, input_shape=(28, 28, 1), kernel_initializer=k_i_fn),
         tf.keras.layers.MaxPool2D(pool_size=(2,2)),
-        tf.keras.layers.Conv2D(256, (3,3), activation=act_fn, 
-        	input_shape=(28, 28, 1), kernel_initializer=k_i_fn),
+        
+        tf.keras.layers.Conv2D(256, (3,3), activation=act_fn, input_shape=(28, 28, 1), kernel_initializer=k_i_fn),
+        
         tf.keras.layers.Flatten(),
+        
         tf.keras.layers.Dense(256, activation=act_fn),
+        
         tf.keras.layers.Dense(10, activation="softmax")
     ])
-    model.compile(
-    optimizer=opt_fn,
-    loss=loss_fn,
-    metrics=["accuracy"]
-    )
+    model.compile(optimizer=opt_fn, loss=loss_fn, metrics=["accuracy"])
+    return model
+
+def create_BN_model(k_i_fn, act_fn, opt_fn, loss_fn):
+    model = tf.keras.Sequential([
+        tf.keras.layers.Conv2D(256, (3,3), activation=act_fn, input_shape=(28, 28, 1), kernel_initializer=k_i_fn),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.MaxPool2D(pool_size=(2,2)),
+        
+        tf.keras.layers.Conv2D(256, (3,3), activation=act_fn, input_shape=(28, 28, 1), kernel_initializer=k_i_fn),
+        tf.keras.layers.BatchNormalization(),
+        
+        tf.keras.layers.Flatten(),
+        
+        tf.keras.layers.Dense(256, activation=act_fn),
+        tf.keras.layers.BatchNormalization(),
+        
+        tf.keras.layers.Dense(10, activation="softmax")
+    ])
+    model.compile(optimizer=opt_fn, loss=loss_fn, metrics=["accuracy"])
     return model
 
 def all_k_i_fns() -> list:
@@ -133,18 +150,17 @@ def CNN_model():
         metrics=["accuracy"]
     )
     
-    # Functions for Data Augmentation
+# Functions for Data Augmentation
     
-    def _shift_image(image, diffx, diffy, image_size):
-        curr_image = image.reshape(image_size)
-        shifted_image = shift(curr_image, [diffx, diffy], cval=0, mode="constant")
-        return shifted_image.reshape([-1])
+def _shift_image(image, diffx, diffy, image_size):
+    curr_image = image.reshape(image_size)
+    shifted_image = shift(curr_image, [diffx, diffy], cval=0, mode="constant")
+    return shifted_image.reshape([-1])
     
-    def augment_data(x_train, y_train):
-        x_train_aug = [image for image in x_train]
-        y_train_aug = [image for image in y_train]
-        for diffx, diffy in (1,0), (-1,0), (0,1), (0,-1)):
-            for (x_image, y_label) in (x_train, y_train):
-                x_train_aug.append(_shift_image(x_image, diffx, diffy))
-                y_train_aug.append(_shift_image(y_label))
-        
+def augment_data(x_train, y_train):
+    x_train_aug = [image for image in x_train]
+    y_train_aug = [image for image in y_train]
+    for diffx, diffy in (1,0), (-1,0), (0,1), (0,-1)):
+        for (x_image, y_label) in (x_train, y_train):
+            x_train_aug.append(_shift_image(x_image, diffx, diffy))
+            y_train_aug.append(_shift_image(y_label))
