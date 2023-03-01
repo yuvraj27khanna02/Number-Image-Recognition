@@ -9,29 +9,21 @@ from model_functions import *
 x_train.shape = (60000, 28, 28)
 x_test.shape = (10000, 28, 28)
 y_train.shape = (60000, 1, 1)
-y_test = (10000, 1, 1)
+y_test.shape = (10000, 1, 1)
 
 x_train_bin = np.array(x_train > 0.5, dtype=np.float32)
 x_test_bin = np.array(x_test > 0.5, dtype=np.float32)
 
-#   displaying image as example
-# INDEX_TO_BE_DISPLAYED = 27
-# temp_image = x_train[INDEX_TO_BE_DISPLAYED]
-# temp_image = np.array(temp_image, dtype="float")
-# temp_image_pixels = temp_image.reshape((28, 28))
-# plt.imshow(temp_image_pixels, cmap="Greys")
-# plt.show()
-# print(y_train[INDEX_TO_BE_DISPLAYED][0][0])
+model_dict = {}
 
-#   model testing
-
-print("                             ------------------------------------")
-
-for k_i_fn in all_k_i_fns():
-    for act_fn in all_act_fns():
+for act_fn in all_act_fns():
+    for fnl_fn in all_fnl_fns():
         for opt_fn in all_opt_fns():
-            for loss_fn in all_loss_fns():
-                model = create_basic_model(k_i_fn, act_fn, opt_fn, loss_fn)
-                model.fit(x=x_train_bin, y=y_train, epochs=10, verbose=1)
-                print(f"	Kernel initialiser: {k_i_fn} ; Activation function: {act_fn} ; Optimizer function: {opt_fn} ; Loss function: {loss_fn}")
-                print("                             ###################################")
+                curr_config = (act_fn, fnl_fn, opt_fn)
+                model_temp = create_basic_model(act_fn, fnl_fn, opt_fn, "sparse_categorical_crossentropy", verbose=False)
+                model_temp.fit(x=x_train_bin, y=y_train, epochs=2, verbose=0)
+                loss_temp, acc_temp = model_temp.evaluate(x=x_test_bin, y=y_test, verbose=0)
+                model_dict[curr_config] = (loss_temp, acc_temp)
+
+
+print(model_dict)

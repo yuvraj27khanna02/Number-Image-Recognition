@@ -1,35 +1,46 @@
 import tensorflow as tf
-from scipy.ndimage.interpolation import shift
 from scipy.ndimage import shift
+import numpy as np
+from matplotlib import pyplot as plt
 
-def create_basic_model(k_i_fn, act_fn, opt_fn, loss_fn):
+def create_basic_model(act_fn, fnl_fn, opt_fn, loss_fn, verbose=False):
+    """Returns a basic CNN model
+    """
+    if verbose:
+        print(f"            Activation function: {act_fn} ; Optimizer function: {opt_fn} ; Loss function: {loss_fn}")
+
     model = tf.keras.Sequential([
-        tf.keras.layers.Conv2D(256, (3,3), activation=act_fn, input_shape=(28, 28, 1), kernel_initializer=k_i_fn),
+        tf.keras.layers.Conv2D(32, (3,3), activation=act_fn, input_shape=(28, 28, 1)),
         tf.keras.layers.MaxPool2D(pool_size=(2,2)),
         
-        tf.keras.layers.Conv2D(256, (3,3), activation=act_fn, input_shape=(28, 28, 1), kernel_initializer=k_i_fn),
+        tf.keras.layers.Conv2D(64, (3,3), activation=act_fn),
         
         tf.keras.layers.Flatten(),
         
-        tf.keras.layers.Dense(256, activation=act_fn),
+        tf.keras.layers.Dense(128, activation=act_fn),
         
-        tf.keras.layers.Dense(10, activation="softmax")
+        tf.keras.layers.Dense(10, activation=fnl_fn)
     ])
     model.compile(optimizer=opt_fn, loss=loss_fn, metrics=["accuracy"])
     return model
 
-def create_BN_model(k_i_fn, act_fn, opt_fn, loss_fn):
+def create_BN_model(k_i_fn, act_fn, opt_fn, loss_fn, verbose=False):
+    """Returns a basic CNN model with Batch Normalization
+    """
+    if verbose:
+        print(f"	Kernel initialiser: {k_i_fn} ; Activation function: {act_fn} ; Optimizer function: {opt_fn} ; Loss function: {loss_fn}")
+
     model = tf.keras.Sequential([
-        tf.keras.layers.Conv2D(256, (3,3), activation=act_fn, input_shape=(28, 28, 1), kernel_initializer=k_i_fn),
+        tf.keras.layers.Conv2D(32, (3,3), activation=act_fn, input_shape=(28, 28, 1), kernel_initializer=k_i_fn),
         tf.keras.layers.BatchNormalization(),
         tf.keras.layers.MaxPool2D(pool_size=(2,2)),
         
-        tf.keras.layers.Conv2D(256, (3,3), activation=act_fn, input_shape=(28, 28, 1), kernel_initializer=k_i_fn),
+        tf.keras.layers.Conv2D(64, (3,3), activation=act_fn),
         tf.keras.layers.BatchNormalization(),
         
         tf.keras.layers.Flatten(),
         
-        tf.keras.layers.Dense(256, activation=act_fn),
+        tf.keras.layers.Dense(128, activation=act_fn),
         tf.keras.layers.BatchNormalization(),
         
         tf.keras.layers.Dense(10, activation="softmax")
@@ -39,100 +50,50 @@ def create_BN_model(k_i_fn, act_fn, opt_fn, loss_fn):
 
 def all_k_i_fns() -> list:
     """Returns a list of all kernel initialiser functions
+    >>> for k_i in all_k_i_fns():
+    >>>     tf.keras.layers.Conv2D(kernel_initializer=k_1)
     """
-    # for all k_i in all_k_i_fns():
-    #    tf.keras.layer.(kernel_initializer=k_i)
-    #    mode.add(layers.Dense(kernel_initializer=k_i))
-    return [tf.keras.initializers.RandomNormal(), 
-    		tf.keras.initializers.RandomUniform(),
-            tf.keras.initializers.TruncatedNormal(),
-            tf.keras.initializers.Zeros(),
-            tf.keras.initializers.Ones(),
-            tf.keras.initializers.GlorotNormal(),
-            tf.keras.initializers.GlorotUniform(),
-            tf.keras.initializers.HeNormal(),
-            tf.keras.initializers.HeUniform(),
-            tf.keras.initializers.Identity(),
-            tf.keras.initializers.Orthogonal(),
-            tf.keras.initializers.Constant(),
-            tf.keras.initializers.VaruanceScaling(),
-            tf.keras.initializers.Uniform()]
+    return ['constant', 'deserialize', 'get', 'glorot_normal', 'glorot_uniform', 'he_normal', 'he_uniform',
+            'identity', 'lecun_normal', 'lecun_uniform', 'ones', 'orthogonal', 'random_normal', 'random_uniform',
+            'serialize', 'truncated_normal', 'variance_scaling', 'zeros']
 
-def all_adv_act_fns() -> list:
-    """Returns all Advanced activation functions
-    """
-    return [tf.keras.layers.ReLU(), tf.keras.layers.Softmax(),
-    		tf.keras.layers.LeakyReLU(), tf.keras.layers.PReLU(),
-            tf.keras.layers.ELU(), tf.keras.layers.ThresholdedReLU()]
+# def all_adv_act_fns() -> list:
+#     """Returns all Advanced activation functions
+#     """
+#     return [tf.keras.layers.ReLU(), tf.keras.layers.Softmax(),
+#     		tf.keras.layers.LeakyReLU(), tf.keras.layers.PReLU(),
+#             tf.keras.layers.ELU(), tf.keras.layers.ThresholdedReLU()]
 
 def all_act_fns() -> list:
     """Returns all tf.keras activation functions
     """
-    return ["deserialize", "elu", "exponential", "gelu", "hard_sigmoid",
-            "linear", "relu", "selu", "serialize", "sigmoid", "softmax",
-            "softplus", "softsign", "swish", "tanh"]
+    return ["elu", "exponential", "gelu", "hard_sigmoid", "linear",
+            "relu", "selu", "sigmoid", "softmax", "softplus", "softsign",
+            "swish", "tanh"]
+
+def all_fnl_fns() -> list:
+    """Returns all tf.keras activation fucntions for the last layer of a neural network
+    """
+    return ["sigmoid", "softmax", "softplus", "softsign"]
 
 def all_opt_fns() -> list:
     # returns all the optimizer functions
-    return [tf.keras.optimizers.Adam(), tf.keras.optimizers.SGD(), 
-            tf.keras.optimizers.RMSprop(), tf.keras.optimizers.AdamW(), 
-            tf.keras.optimizers.Adadelta(), tf.keras.optimizers.Adagrad(), 
-            tf.keras.optimizers.Adamax(), tf.keras.optimizers.Adafactor(), 
-            tf.keras.optimizers.Nadam(), tf.keras.optimizers.Ftrl()]
+    return ['Adadelta', 'Adagrad', 'Adam', 'Adamax', 'Ftrl', 'Nadam', 'RMSprop', 'SGD', 'deserialize', 'get', 'serialize']
 
-def all_loss_fns() -> list:
-    # returns all the loss functions
-    return [tf.keras.metrics.kl_divergence(),
-    		tf.keras.metrics.mean_absolute_error(),
-            tf.keras.metrics.mean_sqaured_error(),
-            tf.keras.metrics.mean_absolute_percentage_error(),
-            tf.keras.metrics.mean_sqaured_logarithmic_error(),
-            tf.keras.metrics.binary_crossentropy(),
-            tf.keras.metrics.binary_focal_crossentropy(),
-            tf.keras.metrics.categorical_crossentropy(),
-            tf.keras.metrics.categorical_hinge(),
-            tf.keras.metrics.cosine_similarity(),
-            tf.keras.metrics.deserialize(),
-            tf.keras.metrics.hinge(),
-            tf.keras.metrics.huber(),
-            tf.keras.metrics.kl_divergence(),
-            tf.keras.metrics.kld(),
-            tf.keras.metrics.kullback_leibler_divergence(),
-            tf.keras.metrics.log_cosh(),
-            tf.keras.metrics.poisson(),
-            tf.keras.metrics.serialize(),
-            tf.keras.metrics.sparse_categorical_crossentropy(),
-            tf.keras.metrics.sqaured_hinge()]
+# def all_loss_fns() -> list:
+#     """Returns all loss functions
+#     >>> all_loss_fns = ['binary_crossentropy', 'binary_focal_crossentropy', 'categorical_crossentropy', 'hinge', 'kl_divergence', 
+#     'kld', 'kullback_leibler_divergence', 'log_cosh', 'logcosh', 'mae', 'mape', 'mean_absolute_error', 'mean_absolute_percentage_error',
+#     'mean_squared_error', 'mean_squared_logarithmic_error', 'mse', 'msle', 'poisson', 'sparse_categorical_accuracy', 
+#     'sparse_categorical_crossentropy', 'sparse_top_k_categorical_accuracy', 'squared_hinge', 'top_k_categorical_accuracy']
+#     """
+#     # returns all the loss functions
+#     return ['sparse_categorical_crossentropy',]
 
 def all_pds() -> list:
     """Returns all padding options
     """
     return ["valid", "same"]
-
-def CNN_model():
-    NUMBER_OF_OUTPUTS = 10
-
-    MNIST_model = tf.keras.Sequential([
-
-        tf.keras.layers.Conv2D(32, (3, 3), activation="relu", input_shape=(28, 28, 1)),
-        tf.keras.layers.MaxPool2D(pool_size=2, strides=2),
-
-        tf.keras.layers.Conv2D(64, (3, 3), activation="relu"),
-        tf.keras.layers.MaxPool2D(pool_size=2, strides=2),
-
-        tf.keras.layers.Conv2D(128, (3, 3), activation="sigmoid"),
-        tf.keras.layers.MaxPool2D(pool_size=(2, 2)),
-
-        tf.keras.layers.Flatten(),
-        tf.keras.layers.Dense(1024, activation="relu"),
-        tf.keras.layers.Dense(NUMBER_OF_OUTPUTS, activation="softmax")
-    ])
-
-    MNIST_model.compile(
-        optimizer=tf.keras.optimizers.Adam(), 
-        loss=tf.keras.losses.SparseCategoricalCrossentropy(),
-        metrics=["accuracy"]
-    )
     
 # Functions for Data Augmentation
     
@@ -148,3 +109,9 @@ def augment_data(x_train, y_train):
         for (x_image, y_label) in (x_train, y_train):
             x_train_aug.append(_shift_image(x_image, diffx, diffy))
             y_train_aug.append(_shift_image(y_label))
+
+def display_image(temp_image):
+    temp_image = np.array(temp_image, dtype="float")
+    temp_image_pixels = temp_image.reshape((28, 28))
+    plt.imshow(temp_image_pixels, cmap="Greys")
+    plt.show()
