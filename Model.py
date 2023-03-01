@@ -32,6 +32,6 @@ for k_i_fn in all_k_i_fns():
         for opt_fn in all_opt_fns():
             for loss_fn in all_loss_fns():
                 model = create_basic_model(k_i_fn, act_fn, opt_fn, loss_fn)
-                model.fit(x=x_train_bin, y=y_train, epochs=10, verbose=2)
+                model.fit(x=x_train_bin, y=y_train, epochs=10, verbose=1)
                 print(f"	Kernel initialiser: {k_i_fn} ; Activation function: {act_fn} ; Optimizer function: {opt_fn} ; Loss function: {loss_fn}")
                 print("                             ###################################")
