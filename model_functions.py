@@ -2,12 +2,13 @@ import tensorflow as tf
 from scipy.ndimage import shift
 import numpy as np
 from matplotlib import pyplot as plt
+import heapq
 
 def create_basic_model(act_fn, fnl_fn, opt_fn, loss_fn, verbose=False):
-    """Returns a basic CNN model
+    """Returns a basic CNN model.
     """
     if verbose:
-        print(f"            Activation function: {act_fn} ; Optimizer function: {opt_fn} ; Loss function: {loss_fn}")
+        print(f"            Activation function: {act_fn} ; Final Activation function: {fnl_fn} ; Optimizer function: {opt_fn} ; Loss function: {loss_fn}")
 
     model = tf.keras.Sequential([
         tf.keras.layers.Conv2D(32, (3,3), activation=act_fn, input_shape=(28, 28, 1)),
@@ -25,7 +26,8 @@ def create_basic_model(act_fn, fnl_fn, opt_fn, loss_fn, verbose=False):
     return model
 
 def create_BN_model(k_i_fn, act_fn, opt_fn, loss_fn, verbose=False):
-    """Returns a basic CNN model with Batch Normalization
+    """Returns a basic CNN model with Batch Normalization.
+    Better than create_basic_model but requires more processing as well.
     """
     if verbose:
         print(f"	Kernel initialiser: {k_i_fn} ; Activation function: {act_fn} ; Optimizer function: {opt_fn} ; Loss function: {loss_fn}")
@@ -57,13 +59,6 @@ def all_k_i_fns() -> list:
             'identity', 'lecun_normal', 'lecun_uniform', 'ones', 'orthogonal', 'random_normal', 'random_uniform',
             'serialize', 'truncated_normal', 'variance_scaling', 'zeros']
 
-# def all_adv_act_fns() -> list:
-#     """Returns all Advanced activation functions
-#     """
-#     return [tf.keras.layers.ReLU(), tf.keras.layers.Softmax(),
-#     		tf.keras.layers.LeakyReLU(), tf.keras.layers.PReLU(),
-#             tf.keras.layers.ELU(), tf.keras.layers.ThresholdedReLU()]
-
 def all_act_fns() -> list:
     """Returns all tf.keras activation functions
     """
@@ -74,21 +69,23 @@ def all_act_fns() -> list:
 def all_fnl_fns() -> list:
     """Returns all tf.keras activation fucntions for the last layer of a neural network
     """
-    return ["sigmoid", "softmax", "softplus", "softsign"]
+    return ["sigmoid", "softmax", "softplus", "softsign", "elu"]
 
 def all_opt_fns() -> list:
+    """Returns all arguements for optimizer parameter of tf.keras.Model.compile
+    full_list -> ["adam", "adamax", "adagrad", "adadelta", "nadam", "ftrl", "rsmprop", "sgd"]
+    """
     # returns all the optimizer functions
-    return ['Adadelta', 'Adagrad', 'Adam', 'Adamax', 'Ftrl', 'Nadam', 'RMSprop', 'SGD', 'deserialize', 'get', 'serialize']
+    return ["adamax", "adagrad", "adadelta", "adam", "ftrl", "nadam", "rmsprop", "sgd"]
 
-# def all_loss_fns() -> list:
-#     """Returns all loss functions
-#     >>> all_loss_fns = ['binary_crossentropy', 'binary_focal_crossentropy', 'categorical_crossentropy', 'hinge', 'kl_divergence', 
-#     'kld', 'kullback_leibler_divergence', 'log_cosh', 'logcosh', 'mae', 'mape', 'mean_absolute_error', 'mean_absolute_percentage_error',
-#     'mean_squared_error', 'mean_squared_logarithmic_error', 'mse', 'msle', 'poisson', 'sparse_categorical_accuracy', 
-#     'sparse_categorical_crossentropy', 'sparse_top_k_categorical_accuracy', 'squared_hinge', 'top_k_categorical_accuracy']
-#     """
-#     # returns all the loss functions
-#     return ['sparse_categorical_crossentropy',]
+
+def all_loss_fns() -> list:
+    """Returns all loss functions
+    """
+    return ['binary_crossentropy', 'binary_focal_crossentropy', 'categorical_crossentropy', 'hinge', 'kl_divergence',
+            'kld', 'kullback_leibler_divergence', 'log_cosh', 'logcosh', 'mae', 'mape', 'mean_absolute_error', 'mean_absolute_percentage_error',
+            'mean_squared_error', 'mean_squared_logarithmic_error', 'mse', 'msle', 'poisson', 'sparse_categorical_accuracy', 
+            'sparse_categorical_crossentropy', 'sparse_top_k_categorical_accuracy', 'squared_hinge', 'top_k_categorical_accuracy']
 
 def all_pds() -> list:
     """Returns all padding options
@@ -115,3 +112,25 @@ def display_image(temp_image):
     temp_image_pixels = temp_image.reshape((28, 28))
     plt.imshow(temp_image_pixels, cmap="Greys")
     plt.show()
+
+def get_max_n_keys(model_dict, n) -> list:
+    """Returns max n keys for comparing model accuracy.
+    n < len(model_dict)
+    """
+    max_5_vals = heapq.nlargest(n, [val[1] for val in model_dict.values()])
+    return_list = []
+    for k, v in model_dict.items():
+        if v[1] in max_5_vals:
+            return_list.append(k)
+    return return_list
+
+def get_min_n_keys(model_dict, n) -> list:
+    """Returns min n keys for comparing model loss.
+    n < len(model_dict)
+    """
+    min_5_vals = heapq.nsmallest(n, [val[0] for val in model_dict.values()])
+    return_list = []
+    for k, v in model_dict.items():
+        if v[0] in min_5_vals:
+            return_list.append(k)
+    return return_list
