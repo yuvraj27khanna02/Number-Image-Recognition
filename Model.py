@@ -21,9 +21,9 @@ for opt_fn in all_opt_fns():
     for fnl_fn in all_fnl_fns():
         for act_fn in all_act_fns():
                 curr_config = (act_fn, fnl_fn, opt_fn)
-                model_temp = create_basic_model(act_fn, fnl_fn, opt_fn, "sparse_categorical_crossentropy")
-                model_temp.fit(x=x_train_bin, y=y_train, epochs=2, verbose=0)
-                loss_temp, acc_temp = model_temp.evaluate(x=x_test_bin, y=y_test, verbose=0)
+                model_temp = create_basic_model(act_fn, fnl_fn, opt_fn, "sparse_categorical_crossentropy", verbose=True)
+                model_temp.fit(x=x_train_bin, y=y_train, epochs=2, verbose=1)
+                loss_temp, acc_temp = model_temp.evaluate(x=x_test_bin, y=y_test, verbose=1)
                 model_res_dict[curr_config] = (loss_temp, acc_temp)
 
 best_accuracy_config = get_max_n_keys(model_res_dict, 5)

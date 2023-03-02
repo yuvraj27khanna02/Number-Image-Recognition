@@ -4,14 +4,14 @@ import numpy as np
 from matplotlib import pyplot as plt
 import heapq
 
-def create_basic_model(act_fn, fnl_fn, opt_fn, loss_fn, verbose=False):
+def create_basic_model(act_fn, fnl_fn, opt_fn, loss_fn, input_shape, verbose=False):
     """Returns a basic CNN model.
     """
     if verbose:
         print(f"            Activation function: {act_fn} ; Final Activation function: {fnl_fn} ; Optimizer function: {opt_fn} ; Loss function: {loss_fn}")
 
     model = tf.keras.Sequential([
-        tf.keras.layers.Conv2D(32, (3,3), activation=act_fn, input_shape=(28, 28, 1)),
+        tf.keras.layers.Conv2D(32, (3,3), activation=act_fn, input_shape=input_shape),
         tf.keras.layers.MaxPool2D(pool_size=(2,2)),
         
         tf.keras.layers.Conv2D(64, (3,3), activation=act_fn),
@@ -25,7 +25,7 @@ def create_basic_model(act_fn, fnl_fn, opt_fn, loss_fn, verbose=False):
     model.compile(optimizer=opt_fn, loss=loss_fn, metrics=["accuracy"])
     return model
 
-def create_BN_model(k_i_fn, act_fn, opt_fn, loss_fn, verbose=False):
+def create_BN_model(k_i_fn, act_fn, opt_fn, loss_fn, input_shape, verbose=False):
     """Returns a basic CNN model with Batch Normalization.
     Better than create_basic_model but requires more processing as well.
     """
@@ -33,7 +33,7 @@ def create_BN_model(k_i_fn, act_fn, opt_fn, loss_fn, verbose=False):
         print(f"	Kernel initialiser: {k_i_fn} ; Activation function: {act_fn} ; Optimizer function: {opt_fn} ; Loss function: {loss_fn}")
 
     model = tf.keras.Sequential([
-        tf.keras.layers.Conv2D(32, (3,3), activation=act_fn, input_shape=(28, 28, 1), kernel_initializer=k_i_fn),
+        tf.keras.layers.Conv2D(32, (3,3), activation=act_fn, input_shape=input_shape, kernel_initializer=k_i_fn),
         tf.keras.layers.BatchNormalization(),
         tf.keras.layers.MaxPool2D(pool_size=(2,2)),
         
@@ -107,9 +107,9 @@ def augment_data(x_train, y_train):
             x_train_aug.append(_shift_image(x_image, diffx, diffy))
             y_train_aug.append(_shift_image(y_label))
 
-def display_image(temp_image):
+def display_image(temp_image, input_shape):
     temp_image = np.array(temp_image, dtype="float")
-    temp_image_pixels = temp_image.reshape((28, 28))
+    temp_image_pixels = temp_image.reshape(input_shape)
     plt.imshow(temp_image_pixels, cmap="Greys")
     plt.show()
 
@@ -134,3 +134,27 @@ def get_min_n_keys(model_dict, n) -> list:
         if v[0] in min_5_vals:
             return_list.append(k)
     return return_list
+
+
+import tensorflow as tf
+import numpy as np
+from matplotlib import pyplot as plt
+from model_functions import *
+import heapq
+from typing import Tuple
+
+def CNN_all_parameters_(x_train, x_test, y_train, y_test, input_shape, verbose=False) -> Tuple:
+    """Returns the best parameters of a CNN model using user given dataset
+    """
+    model_res_dict = {}
+    for opt_fn in all_opt_fns():
+        for fnl_fn in all_fnl_fns():
+            for act_fn in all_act_fns():
+                    curr_config = (act_fn, fnl_fn, opt_fn)
+                    model_temp = create_basic_model(act_fn, fnl_fn, opt_fn, "sparse_categorical_crossentropy", input_shape, verbose=verbose)
+                    model_temp.fit(x=x_train, y=y_train, epochs=2, verbose=int(verbose))
+                    loss_temp, acc_temp = model_temp.evaluate(x=x_test, y=y_test, verbose=int(verbose))
+                    model_res_dict[curr_config] = (loss_temp, acc_temp)
+    best_accuracy_config = get_max_n_keys(model_res_dict, 5)
+    best_loss_config = get_min_n_keys(model_res_dict, 5)
+    return best_accuracy_config, best_loss_config
